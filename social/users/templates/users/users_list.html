@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  {% if query %}
+    <h1>Search user with username: "{{ query }}"</h1>
+    <h3>
+        {% with results.count as total_results %}
+          Found {{ total_results }} result {{ total_results|pluralize }}
+        {% endwith %}
+    </h3>
+    {% for user in results %}
+      <article class="media content-section">
+        <img class="rounded-circle article-img" src="{{ user.profile.image.url }}">
+          <div class="media-body">
+            <div class="article-metadata">
+              <a class="mr-2" href="{{ user.get_absolute_url }}">{{ user.username }}</a>
+              <small>{{user.last_name }} {{ user.first_name }}</small>
+            </div>
+            <p>{{ user.profile.description }}</p>
+      </article>
+    {% empty %}
+      <p>There are no results for your query.</p>
+    {% endfor %}
+    <p><a href="{% url "users:users_list" %}">Search again</a></p>
+  {% else %}
+    <h1>Search for users</h1>
+    <form method="get">
+        {{ form.as_p }}
+        <button class="btn btn-info" type="submit">Search</button>
+    </form>
+  {% endif %}
+<br>
+    <h1>Friends:</h1>
+    {% for user in friends %}
+    <article class="media content-section">
+          <img class="rounded-circle article-img" src="{{ user.profile.image.url }}">
+            <div class="media-body">
+              <div class="article-metadata">
+                <a class="mr-2" href="{{ user.get_absolute_url }}">{{ user.username }}</a>
+                <small>{{user.last_name }} {{ user.first_name }}</small>
+              </div>
+              <p>{{ user.profile.description }}</p>
+    </article>
+      {% empty %}
+        <p>Yo have no friends.</p>
+  {% endfor %}
+<br>
+  <h1>Your subscriptions:</h1>
+  {% for user in following_users %}
+        <article class="media content-section">
+              <img class="rounded-circle article-img" src="{{ user.profile.image.url }}">
+                <div class="media-body">
+                  <div class="article-metadata">
+                    <a class="mr-2" href="{{ user.get_absolute_url }}">{{ user.username }}</a>
+                    <small>{{user.last_name }} {{ user.first_name }}</small>
+                  </div>
+                  <p>{{ user.profile.description }}</p>
+        </article>
+      {% empty %}
+        <p>You have no subscriptions.</p>
+  {% endfor %}
+<br>
+    <h1>People subscribed to you:</h1>
+    {% for user in followers %}
+    <article class="media content-section">
+          <img class="rounded-circle article-img" src="{{ user.profile.image.url }}">
+            <div class="media-body">
+              <div class="article-metadata">
+                <a class="mr-2" href="{{ user.get_absolute_url }}">{{ user.username }}</a>
+                <small>{{user.last_name }} {{ user.first_name }}</small>
+              </div>
+              <p>{{ user.profile.description }}</p>
+    </article>
+      {% empty %}
+        <p>Yo have no followers.</p>
+  {% endfor %}
+{% endblock content %}
+
+
+
+
+
