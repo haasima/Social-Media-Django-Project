@@ -7,13 +7,18 @@ def profile_image_upload_path(instance, filename):
     return f"profiles_pics/{instance.user.username[0].lower()}/{filename}"
 
 class Profile(models.Model):
+    """ Profile model """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_online = models.BooleanField(default=False)
     image = models.ImageField(default='default.jpg', upload_to=profile_image_upload_path)
-    description = models.TextField(null=True, blank=True)
+    bio = models.CharField(default="", blank=True, null=True, max_length=500)
+    date_of_birth = models.DateField(blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
 
-        super(Profile, self).save(*args, **kwargs)
+        super(Profile, self).save(*args, **kwargs) 
 
         img = Image.open(self.image.path)
         
@@ -25,9 +30,10 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f'{self.user.username}'
 
-
+ 
 # Система подписок
 class Contact(models.Model):
+    """ Contact model """
     user_from = models.ForeignKey(User, related_name='rel_from_set',
                                   on_delete=models.CASCADE)
     user_to = models.ForeignKey(User, related_name='rel_to_set',

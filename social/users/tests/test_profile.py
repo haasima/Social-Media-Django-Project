@@ -3,15 +3,17 @@ from django.urls import reverse
 from rest_framework import status
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
-from .test_base import BaseTest
+from .base_users_case import BaseTest
 
 class TestProfile(BaseTest):
         
     def test_get_profile_page(self):
+        """ Получение страницы с профилем пользователя """
         self.client.login(username=self.user.username, password='testing123321')
 
         url = reverse('profile') 
         
+        # Проверка количества запросов к бд 
         with CaptureQueriesContext(connection) as queries:
             response = self.client.get(url)
             self.assertEqual(len(queries), 3)
@@ -19,6 +21,7 @@ class TestProfile(BaseTest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     def test_profile_created_after_creating_user(self):
+        """ Проверка создания профиля при регистрации новых пользователей """
         self.assertEqual(self.user.profile, Profile.objects.get(user=self.user))
         self.client.login(username=self.user.username, password='testing123321')
 
@@ -33,7 +36,6 @@ class TestProfile(BaseTest):
         is_login = self.client.login(username=self.user.username, password='testing123321')
         self.assertEqual(is_login, True)
 
-
         data = {
             'old_password': 'testing123321',
             'new_password1': 'test123321',
@@ -43,11 +45,11 @@ class TestProfile(BaseTest):
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertRedirects(response, reverse('change_password_done'))
 
         self.client.logout()
 
         # Проверка поменялся ли пароль на test123321
-
         is_login = self.client.login(username=self.user.username, password='test123321')
         is_auth = self.user.is_authenticated
         self.assertEqual(is_login, True)

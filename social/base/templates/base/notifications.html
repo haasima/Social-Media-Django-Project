@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %} Notifications {% endblock title %}
+
+{% block content %}
+{% if notifications|length == 0 %}
+    <span class="content-section container">No Notifications</span>
+{% endif %}
+
+<div class="col-md-8 m-auto">
+    {% for notification in notifications %}
+        <div class="card">
+            <div class="card-body">
+                <img class="rounded-circle article-img" src="{{ notification.sender.profile.image.url }}" alt="image">
+                <span class="card-title h4"><a href="{{ notification.sender.get_absolute_url }}" >{{notification.sender}}</a></span>
+                <span class="text-muted float-right small">{{ notification.date }}</span>
+                <br><br>
+                {% if notification.notification_type == 1 %}
+                    <p class="card-text"><i>Liked your post</i> "<a href="{{ notification.post.get_absolute_url }}" >{{ notification.post.title }}</a>"</p>
+                {% elif notification.notification_type == 2 %}
+                    <p class="card-text"><i class="fas fa-user-friends"></i>&nbsp;&nbsp;Started following you</p>
+                {% elif notification.notification_type == 3 %}
+                    <p><a href="{{ notification.post.get_absolute_url }}" >{{ notification.post.title }}</a></p>
+                    <p class="card-text"><i>{{notification.text_preview}}</i></p>
+                {% endif %}
+            </div>
+        </div>
+        <br>
+    {% endfor %}
+    
+    <br><br>
+    
+    </div>
+{% endblock content %}

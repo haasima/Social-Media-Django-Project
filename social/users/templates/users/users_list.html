@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Social Media — Users{% endblock %}
+
 {% block content %}
 
   {% if query %}
@@ -17,7 +19,7 @@
               <a class="mr-2" href="{{ user.get_absolute_url }}">{{ user.username }}</a>
               <small>{{user.last_name }} {{ user.first_name }}</small>
             </div>
-            <p>{{ user.profile.description }}</p>
+            <p>{{ user.profile.bio }}</p>
       </article>
     {% empty %}
       <p>There are no results for your query.</p>

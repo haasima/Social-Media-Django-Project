@@ -12,4 +12,10 @@ class PostAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_posted'
     ordering = ['date_posted']
     
-admin.site.register(Comment)
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['post', 'username', 
+                    'created', 'active']
+    list_filter = ['post', 'created', 'username']
+    ordering = ['created']
+    

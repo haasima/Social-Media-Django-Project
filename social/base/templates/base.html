@@ -12,11 +12,7 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'base/main.css' %}">
 
-    {% if title %}
-        <title>Social Media - {{ title }}</title>
-    {% else %}
-        <title>Social Media</title>
-    {% endif %}
+    <title>{% block title %}Social Media — Home{% endblock %}</title>
 </head>
 <body>
     <header class="site-header">
@@ -29,11 +25,11 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{% url 'base:home' %}">Home</a>
-              <a class="nav-item nav-link" href="{% url "base:about" %}">About</a>
               <a href="" class="text-dark">
               {% if user.is_authenticated %}
               <a class="nav-item nav-link" href="">Chat</a>
               <a class="nav-item nav-link" href="{% url "users:users_list" %}">Users</a>
+              <a class="nav-item nav-link" href="{% url "notification:notifications" %}">Notifications</a>
               {% endif %}
             </a>
             </div>
@@ -68,7 +64,15 @@
         </div>
       </div>
     </main>
-
+    {% block include_js %}
+    {% endblock %}
+    <script>
+      document.addEventListener('DOMContentLoaded', (event) => {
+        // DOM loaded
+        {% block domready %}
+        {% endblock %}
+      })
+    </script>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

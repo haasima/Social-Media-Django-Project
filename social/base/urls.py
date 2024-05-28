@@ -18,6 +18,4 @@ urlpatterns = [
     path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
     # Like posts
     path('post-like/<int:pk>', views.postLike, name='post-like'),
-    # About page
-    path('about/', views.about, name="about"),
 ]

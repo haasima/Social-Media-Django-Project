@@ -1,12 +1,12 @@
 from typing import Any
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from .models import Post, Comment
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.contrib.auth.models import User
-
+from notification.models import Notification
 # drf
 from django.db.models import Prefetch, Count, Exists, Case, When, BooleanField
 
@@ -20,6 +20,7 @@ from django.views.generic import (
 import redis
 from django.conf import settings
 from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 
 r = redis.Redis(host=settings.REDIS_HOST,
                 port=settings.REDIS_PORT,
@@ -30,9 +31,12 @@ def postLike(request, pk):
     post = get_object_or_404(Post, id=request.POST.get('post_id'))
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
+        notify = Notification.objects.filter(post=post, sender=request.user, notification_type=1)
+        notify.delete()
     else:
         post.likes.add(request.user)
-
+        Notification.objects.create(post=post, sender=request.user, user=post.author, notification_type=1)
+    
     return HttpResponseRedirect(reverse('base:post-detail', kwargs={'slug': post.slug,
                                                                     'year': post.date_posted.year,
                                                                     'month': post.date_posted.month,
@@ -44,13 +48,19 @@ class PostListView(ListView):
     template_name = 'base/home.html'
     context_object_name = 'posts'
     ordering = ['-date_posted']
-    paginate_by = 2
+    paginate_by = 5
 
     def get_queryset(self) -> QuerySet[Any]:
-        queryset = (super().get_queryset().select_related('author__profile')
-                    .only('title', 'slug', 'content', 'date_posted', 'author__username', 'author__profile__image'))
+        queryset = super().get_queryset().select_related('author__profile') \
+                    .only('title', 'slug', 'content', 'date_posted', 'author__username', 'author__profile__image')
+
         return queryset
 
+# def load_more_posts(request):
+#     page = request.GET.get('page')
+#     posts = Post.obejects.order_by('-date_posted').select_related('author__profile') \
+#                     .only('title', 'slug', 'content', 'date_posted', 'author__username', 'author__profile__image')
+#     html = render_to_string()
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -89,22 +99,30 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 class PostDetailView(DetailView):
     model = Post
+    
+    def get_object(self, queryset: QuerySet[Any] | None = ...) -> Model:
+        year = self.kwargs["year"]
+        month = self.kwargs["month"]
+        day = self.kwargs["day"]
+        slug = self.kwargs["slug"]
+        pk = self.kwargs["pk"]
+        cache_key = f"post_{year}_{month}_{day}_{slug}_{pk}"
+        post = cache.get(cache_key)
+        
+        if not post:
+            post = get_object_or_404(Post.objects.select_related('author__profile')
+                                    .only('title', 'slug', 'content', 'date_posted', 'author__profile__image',
+                                        'author__username'),
+                                    slug=slug, date_posted__year=year,
+                                    date_posted__month=month, date_posted__day=day, pk=pk)
+            cache.set(cache_key, post, timeout=60*15)
+            
+        return post
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        users = User.objects.all()
-
-        # post url
-        year, month, day, slug = (self.kwargs["year"],
-                                  self.kwargs["month"],
-                                  self.kwargs["day"], self.kwargs["slug"])
-        # slug = self.kwargs["slug"]
-
-        post = get_object_or_404(Post.objects.select_related('author__profile')
-                                 .only('title', 'slug', 'content', 'date_posted', 'author__profile__image',
-                                       'author__username'),
-                                 slug=slug, date_posted__year=year,
-                                 date_posted__month=month, date_posted__day=day)
+        post = self.get_object()
+        
         # comments
         comments = post.comments.select_related('username__profile') \
             .only('post_id', 'username__username', 'content', 'created', 'username__profile__image') \
@@ -112,57 +130,45 @@ class PostDetailView(DetailView):
 
         context['comments'] = comments
         context['form'] = CommentForm()
-        context['users'] = users
 
-        # like posts
+        # likes
         likes_connected = post
         liked = False
+       # likes_connected = likes_connected.likes.select_relate('author').only().filter(id=self.request.user.id)
         if likes_connected.likes.filter(id=self.request.user.id).exists():
             liked = True
 
-        context['number_of_likes'] = likes_connected.likes.count()
+        context['number_of_likes'] = likes_connected.total_likes()
         context['post_is_liked'] = liked
-
-        # views
-        total_views = r.incr(f"post:{post.id}:views")
-        context['total_views'] = total_views
 
         return context
 
     def post(self, request, *args, **kwargs):
         form = CommentForm(request.POST)
-        self.object = self.get_object()
-        context = super().get_context_data(**kwargs)
-
-        post = self.object
-
-        comments = post.comments.select_related('username__profile') \
-            .only('post_id', 'username__username', 'content', 'created', 'username__profile__image') \
-            .filter(active=True)
-
-        context['post'] = post
-        context['comments'] = comments
-        context['form'] = form
+        post = self.object = self.get_object()
 
         if form.is_valid():
             content = form.cleaned_data['content']
 
-            comment = Comment.objects.create(
+            Comment.objects.create(
                 username=request.user, content=content, post=post
             )
 
-            form = CommentForm()
-            context['form'] = form
+            if request.user != post.author:
+                Notification.objects.create(post=post, sender=request.user, text_preview=content, user=post.author, notification_type=3)
 
-            return self.render_to_response(context=context)
+            return redirect('base:post-detail', 
+                                slug=post.slug,
+                                year=post.date_posted.year,
+                                month=post.date_posted.month,
+                                day=post.date_posted.day, pk=post.pk
+                )
 
-        return self.render_to_response(context=context)
+        context = self.get_context_data()
+        context['form'] = form
+        return self.render(request, reverse('base:post-detail'), context=context)
 
     def get_queryset(self) -> QuerySet[Any]:
         queryset = super().get_queryset().select_related('author__profile')
-        # queryset = queryset.prefetch_related(Prefetch('comments', Comment.objects.select_related('username__profile')))
+            # .prefetch_related('likes')
         return queryset
-
-
-def about(request):
-    return render(request, 'base/about.html', {'title': 'About'})
