@@ -36,7 +36,7 @@ def user_follow(request, username):
 def user_detail(request, username):
     user = get_object_or_404(User.objects.select_related('profile').prefetch_related('followers')
                              .only('username', 'first_name', 'last_name', 'email',
-                                                                         'profile__image', 'profile__description'), username=username)
+                                                                         'profile__image', 'profile__bio'), username=username)
     posts = Post.objects.filter(author=user).only('title', 'date_posted', 'slug')
 
     context = {'user': user, 'posts': posts}
@@ -51,7 +51,7 @@ def user_search(request):
     contacts_user_to = Contact.objects.filter(user_to=request.user)
 
     followers = contacts_user_to.select_related('user_from__profile').only('user_from__profile__image',
-                                                                           'user_from__profile__description',
+                                                                           'user_from__profile__bio',
                                                                            'user_from__first_name',
                                                                            'user_from__last_name',
                                                                            'user_from__username',
@@ -61,13 +61,13 @@ def user_search(request):
 
     friends = Contact.objects.filter(user_from=request.user, user_to__in=followers_users).select_related(
         'user_to__profile').only('user_to__profile__image',
-                                 'user_to__profile__description', 'user_to__first_name',
+                                 'user_to__profile__bio', 'user_to__first_name',
                                  'user_to__last_name', 'user_to__username', 'user_to__profile__id')
 
     friends_users = [friend.user_to for friend in friends]
 
     following_contacts = contacts_user_from.select_related('user_to__profile').only('user_to__profile__image',
-                                                                         'user_to__profile__description', 'user_to__first_name',
+                                                                         'user_to__profile__bio', 'user_to__first_name',
                                                                          'user_to__last_name', 'user_to__username', 'user_to__profile__id')
     
     following_users = [contact.user_to for contact in following_contacts]
@@ -80,7 +80,7 @@ def user_search(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
-            results = User.objects.filter(username__icontains=query).select_related('profile').only('profile__image', 'profile__description',
+            results = User.objects.filter(username__icontains=query).select_related('profile').only('profile__image', 'profile__bio',
                                                                                          'username', 'first_name', 'last_name')
 
     context = {'form': form, 'query': query,

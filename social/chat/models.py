@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 
 class Message(models.Model):
+    """ Message model """
     user = models.ForeignKey(User, related_name='sent_messages', on_delete=models.SET_NULL, null=True)
     room_name = models.CharField(max_length=255)
     text = models.TextField()

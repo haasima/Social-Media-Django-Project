@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 from django.urls import reverse_lazy
 import os
@@ -38,7 +39,10 @@ INSTALLED_APPS = [
     'base',
     'users',
     'chat',
-    # bootstrap
+    'notification',
+    'sending_email_app',
+    # styles
+    'ckeditor',
     'bootstrap5',
     'crispy_forms',
     'crispy_bootstrap5',
@@ -46,6 +50,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     # drf
     'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -132,7 +137,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
@@ -157,7 +162,7 @@ ABSOLUTE_URL_OVERRIDES = {
                                         args=[u.username])
 }
 
-# authentication with email
+# Authentication 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'users.authentication.EmailAuthBackends'
@@ -168,7 +173,7 @@ INTERNAL_IPS = [
     '127.0.0.1',  
 ]
 
-# Redis
+# Redis settings
 REDIS_HOST = 'localhost' 
 REDIS_PORT = 6379 
 REDIS_DB = 0
@@ -183,6 +188,26 @@ CACHES = {
     }
 }
 
+# Celery settings
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Moscow'
+
+# Email sender settings
+EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
+#add your host of the email here in this case its Gmail so we are going to use Gmail host
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+#add the port number of the email server
+EMAIL_PORT = 587
+#add your gamil here
+EMAIL_HOST_USER = 'gaasmaksim27@gmail.com'
+#add your password here
+EMAIL_HOST_PASSWORD = 'olwr mfhy bcww mmja'
+DEFAULT_FROM_EMAIL='Celery <gaasmaksim27@gmail.com>'
+
 # LOGGING = {
 #     'version': 1,
 #     'handlers': {
@@ -196,17 +221,38 @@ CACHES = {
 #     }
 # }
 
+# Rest framework settings
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+    'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
+}
+
+# Channel settings
 CHANNEL_LAYERS = { 'default': {
     'BACKEND': 'channels_redis.core.RedisChannelLayer',
     'CONFIG': {
     'hosts': [('127.0.0.1', 6379)],
     }, },
+}
+
+# Ckeditor settings
+CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'width':'auto',
+    },
 }

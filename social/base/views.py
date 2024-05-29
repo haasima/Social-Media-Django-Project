@@ -2,14 +2,11 @@ from typing import Any
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from .models import Post, Comment
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.contrib.auth.models import User
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-
+from notification.models import Notification
 # drf
 from django.db.models import Prefetch, Count, Exists, Case, When, BooleanField
 
@@ -34,9 +31,12 @@ def postLike(request, pk):
     post = get_object_or_404(Post, id=request.POST.get('post_id'))
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
+        notify = Notification.objects.filter(post=post, sender=request.user, notification_type=1)
+        notify.delete()
     else:
         post.likes.add(request.user)
-
+        Notification.objects.create(post=post, sender=request.user, user=post.author, notification_type=1)
+    
     return HttpResponseRedirect(reverse('base:post-detail', kwargs={'slug': post.slug,
                                                                     'year': post.date_posted.year,
                                                                     'month': post.date_posted.month,
@@ -53,6 +53,7 @@ class PostListView(ListView):
     def get_queryset(self) -> QuerySet[Any]:
         queryset = super().get_queryset().select_related('author__profile') \
                     .only('title', 'slug', 'content', 'date_posted', 'author__username', 'author__profile__image')
+
         return queryset
 
 # def load_more_posts(request):
@@ -104,7 +105,8 @@ class PostDetailView(DetailView):
         month = self.kwargs["month"]
         day = self.kwargs["day"]
         slug = self.kwargs["slug"]
-        cache_key = f"post_{year}_{month}_{day}_{slug}"
+        pk = self.kwargs["pk"]
+        cache_key = f"post_{year}_{month}_{day}_{slug}_{pk}"
         post = cache.get(cache_key)
         
         if not post:
@@ -112,7 +114,7 @@ class PostDetailView(DetailView):
                                     .only('title', 'slug', 'content', 'date_posted', 'author__profile__image',
                                         'author__username'),
                                     slug=slug, date_posted__year=year,
-                                    date_posted__month=month, date_posted__day=day)
+                                    date_posted__month=month, date_posted__day=day, pk=pk)
             cache.set(cache_key, post, timeout=60*15)
             
         return post
@@ -136,7 +138,7 @@ class PostDetailView(DetailView):
         if likes_connected.likes.filter(id=self.request.user.id).exists():
             liked = True
 
-        context['number_of_likes'] = likes_connected.likes.count()
+        context['number_of_likes'] = likes_connected.total_likes()
         context['post_is_liked'] = liked
 
         return context
@@ -152,6 +154,8 @@ class PostDetailView(DetailView):
                 username=request.user, content=content, post=post
             )
 
+            if request.user != post.author:
+                Notification.objects.create(post=post, sender=request.user, text_preview=content, user=post.author, notification_type=3)
 
             return redirect('base:post-detail', 
                                 slug=post.slug,
@@ -162,9 +166,9 @@ class PostDetailView(DetailView):
 
         context = self.get_context_data()
         context['form'] = form
-        return self.render_to_response(context=context)
+        return self.render(request, reverse('base:post-detail'), context=context)
 
     def get_queryset(self) -> QuerySet[Any]:
-        queryset = super().get_queryset().select_related('author__profile')\
-            .prefetch_related('likes')
+        queryset = super().get_queryset().select_related('author__profile')
+            # .prefetch_related('likes')
         return queryset

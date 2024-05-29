@@ -12,10 +12,10 @@
             <strong class="text-secondary">{{ number_of_likes }} like{{ number_of_likes|pluralize }}</strong>
           </div>
           <h2 class="article-title">{{ object.title }}</h2>
-          <p class="article-content">{{ object.content }}</p>
+          <p class="article-content">{{ object.content|safe }}</p>
         </div>
       </article>
-      {% if user.is_authenticated %}
+      {% if user.is_authenticated and object.author != request.user %}
         <div class="form-group">
         <form action="{% url "base:post-like" object.id %}" method="POST">
               {% csrf_token %}

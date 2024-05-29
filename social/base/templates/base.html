@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'base/main.css' %}">
 
-    {<title>{% block title %}Social Media — Home{% endblock %}</title>
+    <title>{% block title %}Social Media — Home{% endblock %}</title>
 </head>
 <body>
     <header class="site-header">
@@ -29,6 +29,7 @@
               {% if user.is_authenticated %}
               <a class="nav-item nav-link" href="">Chat</a>
               <a class="nav-item nav-link" href="{% url "users:users_list" %}">Users</a>
+              <a class="nav-item nav-link" href="{% url "notification:notifications" %}">Notifications</a>
               {% endif %}
             </a>
             </div>
