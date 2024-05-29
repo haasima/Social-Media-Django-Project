@@ -25,7 +25,7 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f'{self.user.username}'
 
-
+ 
 # Система подписок
 class Contact(models.Model):
     user_from = models.ForeignKey(User, related_name='rel_from_set',

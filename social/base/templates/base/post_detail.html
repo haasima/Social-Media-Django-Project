@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{{ object.title }}{% endblock %}
+
 {% block content %}
     <article class="media content-section">
       <img class="rounded-circle article-img" src='{{ object.author.profile.image.url }}'>
@@ -8,13 +10,6 @@
             <a class="mr-2" href="{{ object.author.get_absolute_url }}">{{ object.author }}</a>
             <small class="text-muted">{{ object.date_posted|date:"F d, Y" }}</small>
             <strong class="text-secondary">{{ number_of_likes }} like{{ number_of_likes|pluralize }}</strong>
-            <strong class="text-secondary">{{ total_views }} view{{ total_views|pluralize }}</strong>
-            {% if object.author == user %}
-              <div>
-                <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{% url "base:post-update" object.id %}">Update</a>
-                <a class="btn btn-danger btn-sm mt-1 mb-1" href="{% url "base:post-delete" object.id %}">Delete</a>
-              </div>
-            {% endif %}
           </div>
           <h2 class="article-title">{{ object.title }}</h2>
           <p class="article-content">{{ object.content }}</p>
@@ -31,6 +26,12 @@
               {% endif %}
         </form>
       {% endif %}
+          {% if object.author == user %}
+            <div>
+              <a class="btn btn-outline-primary btn-sm mt-1 mb-1" href="{% url "base:post-update" object.id %}">Update</a>
+              <a class="btn btn-outline-danger btn-sm mt-1 mb-1" href="{% url "base:post-delete" object.id %}">Delete</a>
+            </div>
+          {% endif %}
         </div>
         <!-- Form to leave comment -->
     {% if user.is_authenticated %}
@@ -67,10 +68,6 @@
             </div>
             <div class="col-12">
               <p class="m-1 mt-3">{{ comment.content }}</p>
-              {% comment %} {% if comment.username == user %}
-                  <a class="btn btn-secondary btn-sm mt-1 mb-1" href="">Update</a>
-                  <a class="btn btn-danger btn-sm mt-1 mb-1" href="">Delete</a>
-              {% endif %} {% endcomment %}
               <p class="text-right text-muted"><small>{{ comment.created }}</small></p>
             </div>
           </div>

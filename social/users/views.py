@@ -5,8 +5,7 @@ from django.contrib import messages
 from .forms import UserRegistrationForm, UserUpdateForm, ProfileUpdateForm, SearchForm
 from django.contrib.auth.models import User
 from base.models import Post
-from django.db.models import Count
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from .models import Contact
 from django.contrib.postgres.search import (SearchVector,
@@ -90,11 +89,6 @@ def user_search(request):
 
     return render(request, 'users/users_list.html', context)
 
- # search_vector = SearchVector('username')
-            # search_query = SearchQuery(query)
-            # results = User.objects.annotate(
-            #     search=search_vector, rank=SearchRank(search_vector, search_query)
-            # ).filter(rank__gte=0.3).order_by('-rank')
 
 def register(request):
     context = {}

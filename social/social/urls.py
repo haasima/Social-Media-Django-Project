@@ -38,6 +38,7 @@ urlpatterns = [
     path('', include('users.urls', namespace='users')),
     path('api/v1/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('chat/', include('chat.urls', namespace='chat')),
 
     # Profile/Registration/Login/Logout
     path('register/', user_views.register, name='register'),
@@ -51,7 +52,6 @@ urlpatterns = [
                                                                     name='change_password'),
     path('change-password/done', auth_views.PasswordChangeDoneView.as_view(template_name='registration/change_password_done.html'),
                                                                             name='change_password_done'),
-
 ]
 
 

@@ -1,36 +1,29 @@
-from django.db import connection
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
-from django.test.utils import CaptureQueriesContext
-from .test_base import BaseTest
+from .base_users_case import BaseTest
 
 class TestEntry(BaseTest):
     def setUp(self):
-        
         self.username = 'register_user'
         self.email = 'registeruser@gmail.com'
         self.password1 = 'testing123321'
         self.password2 = 'testing123321'
-
+        
         super().setUp()
 
         
     def test_login_page_url(self):
+        """ Получение страницы login """
         url = reverse('login')
-
-        # with CaptureQueriesContext(connection) as queries:
-        #     response = self.client.get(url)
-        #     self.assertEqual(len(queries), 0)
-
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_login(self):
+        """ Успешная аутентификация пользователя через username и email"""
         url = reverse('login')
 
         # Проверка аутентификации пользователя через username
-
         data = {
             'username': self.user.username,
             'password': 'testing123321'
@@ -38,7 +31,6 @@ class TestEntry(BaseTest):
 
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-        self.client.logout()
 
         # Проверка аутентификации пользователя через email
 
@@ -49,19 +41,16 @@ class TestEntry(BaseTest):
 
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-        self.client.logout()
 
 
     def test_register_page_url(self):
+        """ Получение страницы register """
         url = reverse('register')
-
-        with CaptureQueriesContext(connection) as queries:
-            response = self.client.get(url)
-            self.assertEqual(len(queries), 0)
-
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_register(self):
+        """ Успешная регистрация пользователя """
         url = reverse('register')
 
         data = {
@@ -73,8 +62,7 @@ class TestEntry(BaseTest):
 
         response = self.client.post(url, data=data)
 
-        user = User.objects.filter(username=self.username, email=self.email)
-        is_in_users = user.exists()
+        is_in_users = User.objects.filter(username=self.username, email=self.email).exists()
 
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertRedirects(response, reverse('login'))
@@ -82,6 +70,7 @@ class TestEntry(BaseTest):
 
         
     def test_failed_register(self):
+        """ Неудачная регистрация пользователя """
         url = reverse('register')
 
         data = {

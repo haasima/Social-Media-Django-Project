@@ -7,4 +7,4 @@ class BaseTest(TestCase):
         self.user = User.objects.create_user(username='test_user',
                                     email='test@gmail.com',
                                     first_name='User', last_name='Test',
-                                    password='testing123321')
+                                    password='testing123321') 

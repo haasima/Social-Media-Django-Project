@@ -1,3 +1,4 @@
+from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.db import models
 from django.contrib.auth.models import User
@@ -13,17 +14,22 @@ class Post(models.Model):
                             unique_for_date='date_posted')
     likes = models.ManyToManyField(User, related_name='post_like', blank=True)
 
-    def __str__(self) -> str:
-        return f'{self.author}: {self.title}'
-
+    def save(self, *args, **kwargs) -> None:
+        self.slug = slugify(self.title)
+        return super(Post, self).save(*args, **kwargs)
+    
     def get_absolute_url(self):
         return reverse("base:post-detail", kwargs={'slug': self.slug,
                                                    'year': self.date_posted.year,
                                                    'month': self.date_posted.month,
                                                    'day': self.date_posted.day,
                                                    'pk': self.pk})
+        
+    def __str__(self) -> str:
+        return f'{self.author}: {self.title}'
     
     class Meta:
+        default_related_name = 'posts'
         ordering = ['-date_posted']
         indexes = [
             models.Index(fields=['-date_posted', 'slug'])
