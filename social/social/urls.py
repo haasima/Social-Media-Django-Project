@@ -33,7 +33,7 @@ router.register(r'users', UserViewSet)
 router.register(r'posts', base_views.PostViewSet)
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('', include('base.urls', namespace='base')),
     path('', include('users.urls', namespace='users')),
     path('', include('notification.urls', namespace='notification')),
