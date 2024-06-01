@@ -18,7 +18,7 @@
                 {% if notification.notification_type == 1 %}
                     <p class="card-text"><i>Liked your post</i> "<a href="{{ notification.post.get_absolute_url }}" >{{ notification.post.title }}</a>"</p>
                 {% elif notification.notification_type == 2 %}
-                    <p class="card-text"><i class="fas fa-user-friends"></i>&nbsp;&nbsp;Started following you</p>
+                    <p class="card-text"><i>Started following you</i></p>
                 {% elif notification.notification_type == 3 %}
                     <p><a href="{{ notification.post.get_absolute_url }}" >{{ notification.post.title }}</a></p>
                     <p class="card-text"><i>{{notification.text_preview}}</i></p>

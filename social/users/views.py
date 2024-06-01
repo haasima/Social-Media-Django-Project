@@ -8,6 +8,7 @@ from base.models import Post
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from .models import Contact
+from notification.models import Notification
 from django.contrib.postgres.search import (SearchVector,
                                             SearchQuery, SearchRank)
 
@@ -23,11 +24,13 @@ def user_follow(request, username):
                                             user_to=user).first()
 
         if contact:
+            Notification.objects.filter(notification_type=3, sender=contact.user_from, user=contact.user_to).delete()
             contact.delete()
             messages.success(request, f'You are no longer a subscriber to {user.username}')
         else:
-            Contact.objects.create(user_from=request.user,
+            contact = Contact.objects.create(user_from=request.user,
                                     user_to=user)
+            Notification.objects.create(notification_type=2, sender=contact.user_from, user=contact.user_to)
             messages.success(request, f'You have subscribed to {user.username}')
 
         return HttpResponseRedirect(reverse('users:user_detail', kwargs={'username': username}))
