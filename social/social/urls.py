@@ -10,7 +10,11 @@ from django.urls import reverse_lazy
 from rest_framework import routers, serializers, viewsets
 from base.base_api import views as base_views
 from sending_email_app import views as mail_views
-
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from rest_framework_simplejwt.views import TokenVerifyView
 
 # class StandardResultsSetPagination(PageNumberPagination):
 #     page_size = 2
@@ -38,6 +42,9 @@ urlpatterns = [
     path('', include('users.urls', namespace='users')),
     path('', include('notification.urls', namespace='notification')),
     path('api/v1/', include(router.urls)),
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('chat/', include('chat.urls', namespace='chat')),
     path('sendmail/', mail_views.sending_mail_to_all, name="sendmail"),
