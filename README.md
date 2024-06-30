@@ -10,27 +10,27 @@
 
 - Профиль пользователя с загрузкой аватара
 
-![Profile](./images/profile.png)
+    ![Profile](./images/profile.png)
 
 - Взаимодействие с другими пользователями
 
-![Subscription](./images/subscription.png)
+    ![Subscription](./images/subscription.png)
 
-![Users](./images/search.png)
+    ![Users](./images/search.png)
 
 - Обмен личными сообщениями в реальном времени с поддержкой WebSocket
 
-![Chat](./images/chat.png)
+    ![Chat](./images/chat.png)
 
 - Создание, удаление и редактирование постов с использованием CKEditor
 
 - Комментарии и лайки
 
-![Post](./images/post.png)
+    ![Post](./images/post.png)
 
 - Уведомления
 
-![Notifications](./images/notifications.png)
+    ![Notifications](./images/notifications.png)
 
 ### Основные технологии
 
