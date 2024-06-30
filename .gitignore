@@ -1,9 +1,11 @@
 # Additional files
+.idea
 .vscode
 testfolder/*
 datadump.json
 .env
 .idea
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
