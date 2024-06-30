@@ -3,31 +3,78 @@
 {% block title %}Chat with {{ username }}{% endblock %}
 
 {% block content %}
-  <div id="chat">
-    {% for message in chat_messages %}
-        {% if message.user.username == requestUser %}
-            <div class="message me">
-                <strong>Me</strong>
-            </div>
-        {% else %}
-            <div class="message other">
-              <strong>{{ username }}</strong>
-            </div>
-        {% endif %}
-        <p>{{ message.text}}</p>
-        <span class="date">{{ message.timestamp }}</span>
-        <br>
-      </div>
-    {% endfor %}
-  <div id="chat-input">
-    <input id="chat-message-input" type="text">
-    <input id="chat-message-submit" type="submit" value="Send">
+<div class="col-md-20 m-auto">
+
+  <div class="container content-section px-0 py-0">
+
+    <div class="bg-gray py-1 px-3">
+      <p class="h5 mb-0 py-2">  
+          <span class="img-cont2">              
+              <img src="{{ friend.profile.image.url }}" alt="user" width="50" height="50" class="rounded-circle">
+          </span>
+          &nbsp;&nbsp;{{ friend.username }}
+      </p>
+      <hr>
+    </div>
+
+    <!-- Chat Box-->
+    <div id="chat" class="d-flex flex-column">
+          <div id="chat-box" class="chat-text-add py-5 px-4 chat-box bg-white flex-grow-1">
+            <!-- OLD CHATS ARE FETCHED FROM DATABASE AND NEW ONES ARE APPENDED BELOW -->
+            {% for message in chat_messages %}
+                {% if message.author != requestUser %}
+                <!-- Sender Message-->
+                <div class="media w-75 mb-3">
+                  <img src="{{ message.user.profile.image.url }}" alt="user" width="40" height="40" class="rounded-circle">
+                  <div class="media-body ml-3">
+                    <div class="bg-light rounded py-2 px-3 mb-2">
+                      <p class="text-small mb-0 text-muted">{{ message.text }}</p>
+                    </div>
+                    <p class="small text-muted">{{ message.timestamp }}</p>
+                  </div>
+                </div>
+                
+                {% else %}
+
+                  <!-- Reciever Message-->
+                  <div class="media w-75 ml-auto mb-3">
+                    <div class="media-body">
+                        <div class="bg-primary rounded py-2 px-3 mb-2">
+                          <p class="text-small mb-0 text-white">{{ message.text }}</p>
+                        </div>
+                        <p class="small text-muted">{{ message.timestamp }}</p>
+                    </div>
+                  </div>
+                
+                {% endif %}
+
+            {% endfor %}
+          </div>
+    </div>
+    <br>
+
+    
+    <div class="px-0 bg-light chat-form">
+      <!-- Typing area -->
+      <form class="w-100">
+        <div class="input-group">
+          <input id="chat-message-input" name="body" type="text" placeholder="Type your message here" aria-describedby="submit" class="form-control rounded-0 border-0 py-4 bg-light">
+          <div class="input-group-append">
+            <button id="chat-message-submit" type="button" class="btn btn-link"> <i class="fa fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+
   </div>
+</div>
+
 {% endblock %}
 
 {% block include_js %}
   {{ username|json_script:"user-username" }}
   {{ request.user.username|json_script:"request-user" }}
+  {{ user_image|json_script:"user-image"}} 
 {% endblock %}
 
 {% block domready %}
@@ -40,6 +87,8 @@
   const requestUser = JSON.parse(
     document.getElementById('request-user').textContent
   );
+
+  const user_image = JSON.parse(document.getElementById('user-image').textContent);
 
   console.log("Request Username:", requestUser);  // Debugging
 
@@ -54,22 +103,74 @@
 
   chatSocket.onmessage = function(event) {
     const data = JSON.parse(event.data);
-    const chat = document.getElementById('chat');
-
-    console.log("Received data:", data);  // Debugging
-
-    const dateOptions = {hour: 'numeric', minute: 'numeric', hour12: true};
-    const datetime = new Date(data.datetime).toLocaleString('en', dateOptions);
-    const isMe = data.user === requestUser;
-    const source = isMe ? 'me' : 'other';
-    const name = isMe ? 'Me' : data.user;
-
-    chat.innerHTML += '<div class="message ' + source + '">' +
-                      '<strong>' + name + '</strong> ' +
-                      '<span class="date">' + datetime + '</span><br>' +
-                      data.message + '</div>';
-    chat.scrollTop = chat.scrollHeight;
+    console.log(data)
+    
+    if (data.username != requestUser)
+        add_sender_chat(data)
+    else
+        add_receiver_chat(data)
   };
+
+  function add_sender_chat(data) {
+            
+    var chat_window = document.querySelector('.chat-text-add')
+    var message = document.createElement('div')
+    message.classList.add('media', 'w-75', 'mb-3')
+    chat_window.appendChild(message)
+
+    var image = document.createElement('img')
+    image.src = String(data.user_image)
+    image.classList.add('rounded-circle')
+    image.width = 40
+    image.height = 40
+    image.alt = data.username
+    message.appendChild(image)
+
+    var text_div = document.createElement('div')
+    text_div.classList.add('media-body', 'ml-3')
+    message.appendChild(text_div)
+
+    var text_div_div = document.createElement('div')
+    text_div_div.classList.add('bg-light', 'rounded', 'py-2', 'px-3', 'mb-2')
+    text_div.appendChild(text_div_div)
+
+    var text_div_div_p = document.createElement('p')
+    text_div_div_p.classList.add('text-small', 'mb-0', 'text-muted')
+    text_div_div_p.innerHTML = data.message
+    text_div_div.appendChild(text_div_div_p)
+
+    text_div_date = document.createElement('p')
+    text_div_date.classList.add('small', 'text-muted')
+    text_div_date.innerHTML = new Date().toLocaleString()
+    text_div.appendChild(text_div_date)
+
+}
+
+function add_receiver_chat(data){
+  var chat_window = document.querySelector('.chat-text-add')
+
+  var message = document.createElement('div')
+  message.classList.add('media', 'w-75', 'ml-auto', 'mb-3')
+  chat_window.appendChild(message)
+
+  var text_div = document.createElement('div')
+  text_div.classList.add('media-body')
+  message.appendChild(text_div)
+
+  var text_div_div = document.createElement('div')
+  text_div_div.classList.add('bg-primary', 'rounded', 'py-2', 'px-3', 'mb-2')
+  text_div.appendChild(text_div_div)
+
+  var text_div_div_p = document.createElement('p')
+  text_div_div_p.classList.add('text-small', 'mb-0', 'text-white')
+  text_div_div_p.innerHTML = data.message
+  text_div_div.appendChild(text_div_div_p)
+
+  text_div_date = document.createElement('p')
+  text_div_date.classList.add('small', 'text-muted')
+  text_div_date.innerHTML = new Date().toLocaleString()
+  text_div.appendChild(text_div_date)
+}
 
   chatSocket.onclose = function(event) {
     console.error('Chat socket closed unexpectedly');
@@ -82,7 +183,10 @@
     const message = input.value;
     if(message) {
       // send message in JSON format
-      chatSocket.send(JSON.stringify({'message': message}));
+      chatSocket.send(JSON.stringify({
+        'message': message,
+        'user_image': user_image
+      }));
       // clear input
       input.value = '';
       input.focus();

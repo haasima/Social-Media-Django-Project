@@ -2,7 +2,6 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.utils import timezone
 from channels.db import database_sync_to_async
-from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
 from .models import Message
 
@@ -25,9 +24,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         # accept connection
         await self.accept()
-        
-        # load messages
-        # await self.load_messages()
 
     async def disconnect(self, code):
         await self.channel_layer.group_discard(
@@ -38,9 +34,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
         message_text = text_data_json['message']
+        user_image = text_data_json['user_image']
         now = timezone.now()
-        
-        # await self.save_message(message_text, now)
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -48,6 +43,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'message': message_text,
                 'user': self.user.username,
+                'user_image': user_image,
                 'datetime': now.isoformat(),
             }
         )
@@ -59,34 +55,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         message = event['message']
         username = event['user']
+        user_image = event['user_image']
         user = await self.get_user_by_username(username)
         new_message = await self.create_chat(user=user, message=message, room_name=self.room_group_name)
         await self.send(text_data=json.dumps({
             "message": new_message.text,
             "user": new_message.user.username,
+            "user_image": user_image,
             "datetime": new_message.timestamp.isoformat()
         }))
-        
-    # @sync_to_async
-    # def save_message(self, message_text, timestamp):
-    #     return Message.objects.create(
-    #         user=self.user,
-    #         room_name=self.room_group_name,
-    #         text=message_text,
-    #         timestamp=timestamp
-    #     )
-        
-       
-    # async def load_messages(self):
-    #     messages = self.get_messages()
-    #     for message in await messages:
-    #         await self.send(text_data=json.dumps({
-    #             'message': message.text,
-    #             'user': message.user.username,
-    #             'datetime': message.timestamp.isoformat()
-    #         }))
-            
-    # @sync_to_async
-    # def get_messages(self):
-    #     return Message.objects.filter(room_name=self.room_group_name).order_by('-timestamp')[:50]
-        

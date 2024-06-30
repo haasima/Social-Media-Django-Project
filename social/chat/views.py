@@ -16,6 +16,10 @@ def chat_room(request, username):
     room_name = f'chat_{"_".join(sorted([requestUser, user.username]))}'
     
     chat_messages = Message.objects.filter(room_name=room_name).order_by('room_name', 'timestamp')
-    return render(request, 'chat/chat.html', {'username': user.username,
+    return render(request, 'chat/chat.html', {
+                                              'username': user.username,
+                                              'friend': user,
                                               'requestUser': requestUser,
-                                              'chat_messages': chat_messages})
+                                              'chat_messages': chat_messages,
+                                              'user_image': request.user.profile.image.url
+                                              })
